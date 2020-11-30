@@ -1,8 +1,8 @@
 package org.example;
 
 public class Simulation {
-    private int width;
-    private int height;
+    public int width;
+    public int height;
     int[][] board;
 
     public Simulation(int width, int height) {
