@@ -1,6 +1,8 @@
 package org.example;
 
 public class Simulation {
+    public static final int DEAD = 0;
+    public static final int ALIVE = 1;
     public int width;
     public int height;
     int[][] board;
@@ -17,7 +19,7 @@ public class Simulation {
         for (int y = 0; y < height; y++) {
             String line = "|";
             for (int x = 0; x < width; x++) {
-                if(this.board[x][y] == 0) {
+                if(this.board[x][y] == DEAD) {
                     line += ".";
                 }else {
                     line += "*";
@@ -35,17 +37,17 @@ public class Simulation {
             for (int x = 0; x < width; x++) {
                 int aliveNeighbours = countAliveNeighbours(x ,y);
 
-                if(this.board[x][y]== 1) {
+                if(this.board[x][y] == ALIVE) {
                     if(aliveNeighbours < 2) {
-                        tempBoard[x][y] = 0;
+                        tempBoard[x][y] = DEAD;
                     }else if(aliveNeighbours == 2 || aliveNeighbours == 3){
-                        tempBoard[x][y] = 1;
+                        tempBoard[x][y] = ALIVE;
                     }else if(aliveNeighbours > 3) {
-                        tempBoard[x][y] = 0;
+                        tempBoard[x][y] = DEAD;
                     }
                 }else {
                     if(aliveNeighbours == 3) {
-                        tempBoard[x][y] = 1;
+                        tempBoard[x][y] = ALIVE;
                     }
                 }
             }
@@ -55,20 +57,20 @@ public class Simulation {
 
     public int isAlive(int x, int y) {
         if(x < 0 || x >= width) {
-            return 0;
+            return DEAD;
         }
         if(y < 0 || y >= height) {
-            return 0;
+            return DEAD;
         }
         return this.board[x][y];
     }
 
     public void setAlive(int x, int y) {
-        this.setState(x, y, 1);
+        this.setState(x, y, ALIVE);
     }
 
     public void setDead(int x, int y) {
-        this.setState(x, y, 0);
+        this.setState(x, y, DEAD);
     }
     public void setState(int x, int y, int state){
         if(x < 0 || x >= width) {

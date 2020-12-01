@@ -18,7 +18,7 @@ public class MainView extends VBox {
     private int cols = 30;
     private int rows = 30;
 
-    private int drawMode = 1;
+    private int drawMode = Simulation.ALIVE;
 
     private Button stepButton;
     private Canvas canvas;
@@ -27,18 +27,16 @@ public class MainView extends VBox {
     private Simulation simulation;
 
     public MainView() {
-        stepButton = new Button("step");
-        this.stepButton.setOnAction(actionEvent -> {
-            this.simulation.nextGeneration();
-            draw();
-        });
+        //ToolBar
+        Toolbar toolbar = new Toolbar(this);
+
         this.canvas = new Canvas(canvasWidth,canvasHeight);
         // Action Listeners
         this.canvas.setOnMousePressed(this::handleDraw);
         this.canvas.setOnMouseDragged(this::handleDraw);
         this.setOnKeyPressed(this::onKeyPressed);
 
-        this.getChildren().addAll(this.stepButton, this.canvas);
+        this.getChildren().addAll(toolbar, this.canvas);
 
         this.affine = new Affine();
         this.affine.appendScale(canvasWidth/(float)cols, canvasHeight/(float)rows);
@@ -48,9 +46,9 @@ public class MainView extends VBox {
 
     private void onKeyPressed(KeyEvent keyEvent) {
         if(keyEvent.getCode() == KeyCode.D){
-            this.drawMode = 1;
+            this.drawMode = Simulation.ALIVE;
         }else if(keyEvent.getCode() == KeyCode.E){
-            this.drawMode = 0;
+            this.drawMode = Simulation.DEAD;
         }
     }
 
@@ -80,7 +78,7 @@ public class MainView extends VBox {
         g.setFill(Color.BLACK);
         for (int x = 0; x < simulation.width; x++) {
             for (int y = 0; y < simulation.height; y++) {
-                if (this.simulation.isAlive(x, y) == 1) {
+                if (this.simulation.isAlive(x, y) == Simulation.ALIVE) {
                     g.fillRect(x, y, 1, 1);
                 }
             }
@@ -94,5 +92,13 @@ public class MainView extends VBox {
         for (int y = 0; y <= this.simulation.height; y++) {
             g.strokeLine(0, y, cols, y);
         }
+    }
+
+    public Simulation getSimulation() {
+        return this.simulation;
+    }
+
+    public void setDrawMode(int mode) {
+        drawMode = mode;
     }
 }
