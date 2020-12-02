@@ -1,10 +1,10 @@
-package org.example;
+package org.example.gol;
 
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import org.example.gol.model.CellState;
 
 public class Infobox extends HBox {
     private static String drawModeFormat = "Draw Mode: %s";
@@ -24,9 +24,9 @@ public class Infobox extends HBox {
 
         this.getChildren().addAll(editingTool, spacer, cursor);
     }
-    public void setDrawMode(int drawMode) {
+    public void setDrawMode(CellState drawMode) {
         String drawModeString;
-        if (drawMode == Simulation.ALIVE) {
+        if (drawMode == CellState.ALIVE) {
             drawModeString = " Drawing";
         } else {
             drawModeString = " Erasing";

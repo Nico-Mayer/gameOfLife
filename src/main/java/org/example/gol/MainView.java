@@ -1,9 +1,8 @@
-package org.example;
+package org.example.gol;
 
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -13,33 +12,41 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
+import org.example.gol.model.Board;
+import org.example.gol.model.BoundedBoard;
+import org.example.gol.model.CellState;
+import org.example.gol.model.StandardRule;
+import org.example.gol.viewmodel.ApplicationState;
+import org.example.gol.viewmodel.ApplicationViewModel;
 
 public class MainView extends VBox {
-    public static final int EDITING = 0;
-    public static final int SIMULATING = 1;
-
     private int canvasWidth = 400;
     private int canvasHeight = 400;
     private int cols = 30;
     private int rows = 30;
-    private int appState = EDITING;
 
-    private int drawMode = Simulation.ALIVE;
+    private CellState drawMode = CellState.ALIVE;
 
     private Infobox infobox;
     private Canvas canvas;
     private Affine affine;
 
     private Simulation simulation;
-    private Simulation initalSimulation;
+    private Board initalSimulation;
+    private ApplicationViewModel appViewModel;
+    private boolean isDrawingEnabeld = true;
+    private boolean drawInitialBoard = true;
 
-    public MainView() {
+    public MainView(ApplicationViewModel appViewModel) {
         //ToolBar
-        Toolbar toolbar = new Toolbar(this);
+        Toolbar toolbar = new Toolbar(this, appViewModel);
         // InfoBox
         this.infobox = new Infobox();
         this.infobox.setDrawMode(this.drawMode);
         this.infobox.setCursorPosition(0, 0);
+        // App View Model
+        this.appViewModel = appViewModel;
+        this.appViewModel.listenToAppState(this::onApplicationStateChanged);
 
         // This Pane Fills the Gap between infobox and canvas
         Pane spacer = new Pane();
@@ -59,8 +66,19 @@ public class MainView extends VBox {
         this.affine = new Affine();
         this.affine.appendScale(canvasWidth/(float)cols, canvasHeight/(float)rows);
 
-        this.initalSimulation = new Simulation(cols, rows);
-        this.simulation = Simulation.copy(initalSimulation);
+        this.initalSimulation = new BoundedBoard(cols, rows);
+    }
+    private void onApplicationStateChanged(ApplicationState state){
+        if(state == ApplicationState.EDITING){
+            this.isDrawingEnabeld = true;
+            this.drawInitialBoard = true;
+        }else if(state == ApplicationState.SIMULATING){
+            this.isDrawingEnabeld = false;
+            this.drawInitialBoard = false;
+            this.simulation = new Simulation(this.initalSimulation, new StandardRule());
+        }else{
+            throw new IllegalArgumentException("unsupported application state" + state.name());
+        }
     }
 
     private void handleMoved(MouseEvent mouseEvent) {
@@ -72,14 +90,14 @@ public class MainView extends VBox {
 
     private void onKeyPressed(KeyEvent keyEvent) {
         if(keyEvent.getCode() == KeyCode.D){
-            this.drawMode = Simulation.ALIVE;
+            this.drawMode = CellState.ALIVE;
         }else if(keyEvent.getCode() == KeyCode.E){
-            this.drawMode = Simulation.DEAD;
+            this.drawMode = CellState.DEAD;
         }
     }
 
     private void handleDraw(MouseEvent mouseEvent) {
-            if(this.appState == SIMULATING){
+            if(!isDrawingEnabeld){
                 return;
             }
             Point2D simCoord = this.getSimulationCoordinates(mouseEvent);
@@ -108,28 +126,28 @@ public class MainView extends VBox {
         g.setFill(Color.LIGHTGRAY);
         g.fillRect(0,0,canvasWidth,canvasHeight);
 
-        if(this.appState == EDITING){
+        if(isDrawingEnabeld){
             drawSimulation(this.initalSimulation);
         }else{
-            drawSimulation(this.simulation);
+            drawSimulation(this.simulation.getBoard());
         }
 
         g.setStroke(Color.GRAY);
         g.setLineWidth(0.05f);
-        for (int x = 0; x <= this.simulation.width; x++) {
+        for (int x = 0; x <= this.initalSimulation.getWidth(); x++) {
             g.strokeLine(x, 0, x, rows);
         }
 
-        for (int y = 0; y <= this.simulation.height; y++) {
+        for (int y = 0; y <= this.initalSimulation.getHeight(); y++) {
             g.strokeLine(0, y, cols, y);
         }
     }
-    private void drawSimulation(Simulation simulationToDraw){
+    private void drawSimulation(Board simulationToDraw){
         GraphicsContext g = this.canvas.getGraphicsContext2D();
         g.setFill(Color.BLACK);
-        for (int x = 0; x < simulationToDraw.width; x++) {
-            for (int y = 0; y < simulationToDraw.height; y++) {
-                if (simulationToDraw.isAlive(x, y) == Simulation.ALIVE) {
+        for (int x = 0; x < simulationToDraw.getWidth(); x++) {
+            for (int y = 0; y < simulationToDraw.getHeight(); y++) {
+                if (simulationToDraw.getState(x, y) == CellState.ALIVE) {
                     g.fillRect(x, y, 1, 1);
                 }
             }
@@ -140,18 +158,8 @@ public class MainView extends VBox {
         return this.simulation;
     }
 
-    public void setDrawMode(int mode) {
+    public void setDrawMode(CellState mode) {
         this.drawMode = mode;
         this.infobox.setDrawMode(mode);
-    }
-
-    public void setAppState(int appState) {
-        if(appState == this.appState){
-            return;
-        }
-        if(appState == SIMULATING) {
-            this.simulation = Simulation.copy(initalSimulation);
-        }
-        this.appState = appState;
     }
 }
